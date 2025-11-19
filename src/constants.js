@@ -15,9 +15,19 @@ const COLORS = {
 const MENU_ITEMS = {
     PENCIL: 'PENCIL',
     ERASER: 'ERASER',
+    RECTANGLE: 'RECTANGLE',
+    CIRCLE: 'CIRCLE',
+    LINE: 'LINE',
     UNDO: 'UNDO',
     REDO: 'REDO',
+    CLEAR: 'CLEAR',
     DOWNLOAD: 'DOWNLOAD'
 }
 
-export {COLORS, MENU_ITEMS}
+const SHAPE_TYPES = {
+    RECTANGLE: 'rectangle',
+    CIRCLE: 'circle',
+    LINE: 'line'
+}
+
+export {COLORS, MENU_ITEMS, SHAPE_TYPES}

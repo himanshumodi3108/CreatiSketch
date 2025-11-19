@@ -1,0 +1,44 @@
+.userNameContainer {
+    @apply absolute bottom-5 left-5 flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer;
+    background-color: theme('colors.background1');
+    border: 1px solid theme('colors.border1');
+    box-shadow: theme('colors.shadow1');
+    z-index: 1000;
+    transition: all 0.2s;
+}
+
+.userNameContainer:hover {
+    background-color: theme('colors.text2');
+}
+
+.icon {
+    color: theme('colors.text1');
+    font-size: 14px;
+}
+
+.userName {
+    font-size: 13px;
+    color: theme('colors.text1');
+    font-weight: 500;
+}
+
+.editIcon {
+    color: theme('colors.text1');
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.nameInput {
+    @apply px-2 py-1 rounded text-sm;
+    border: 1px solid theme('colors.border1');
+    color: theme('colors.text1');
+    background-color: white;
+    min-width: 120px;
+}
+
+.nameInput:focus {
+    outline: none;
+    border-color: theme('colors.border2');
+    box-shadow: theme('colors.shadow2');
+}
+

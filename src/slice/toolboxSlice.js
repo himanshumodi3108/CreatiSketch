@@ -10,8 +10,21 @@ const initialState = {
         color: COLORS.WHITE,
         size: 3
     },
+    [MENU_ITEMS.RECTANGLE]: {
+        color: COLORS.BLACK,
+        size: 3
+    },
+    [MENU_ITEMS.CIRCLE]: {
+        color: COLORS.BLACK,
+        size: 3
+    },
+    [MENU_ITEMS.LINE]: {
+        color: COLORS.BLACK,
+        size: 3
+    },
     [MENU_ITEMS.UNDO]: {},
     [MENU_ITEMS.REDO]: {},
+    [MENU_ITEMS.CLEAR]: {},
     [MENU_ITEMS.DOWNLOAD]: {},
 }
 

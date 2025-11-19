@@ -1,0 +1,28 @@
+.statusContainer {
+    @apply absolute top-5 right-5 flex items-center gap-2 px-3 py-1.5 rounded-md;
+    background-color: theme('colors.background1');
+    border: 1px solid theme('colors.border1');
+    box-shadow: theme('colors.shadow1');
+    z-index: 1000;
+}
+
+.statusIndicator {
+    @apply w-2 h-2 rounded-full;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.statusText {
+    font-size: 12px;
+    color: theme('colors.text1');
+    font-weight: 500;
+}
+

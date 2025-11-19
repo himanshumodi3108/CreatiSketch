@@ -1,30 +1,21 @@
-var d = new Date();
-var year = d.getFullYear();
-var date = d.getDate();
-var month = d.getMonth();
-var hour = d.getHours();
-var minute = d.getMinutes();
-var second = d.getSeconds();
+/**
+ * Generates a timestamp string for file naming
+ * Format: DDMMYYYYHHMMSS
+ */
+const generateTimestamp = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const date = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  const hour = String(d.getHours()).padStart(2, '0');
+  const minute = String(d.getMinutes()).padStart(2, '0');
+  const second = String(d.getSeconds()).padStart(2, '0');
+  
+  return `${date}${month}${year}${hour}${minute}${second}`;
+};
 
-if(hour < 10){
-    hour = "0" + hour;   
-}
-if(minute < 10){
-    minute = "0" + minute;   
-}
-if(second < 10){
-    second = "0" + second;   
-}
+const a = {
+  TIME: generateTimestamp()
+};
 
-if(date < 10){
-    date = "0" + date;   
-}
-if(month < 10){
-    month = "0" + month;   
-}
-
-var time = date+""+month+""+year+""+hour+""+minute+""+second;
-var a = {
-    TIME: time
-}
-export {a}
+export { a, generateTimestamp };
