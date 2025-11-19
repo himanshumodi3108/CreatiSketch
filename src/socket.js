@@ -31,42 +31,42 @@ socket.on('connect', () => {
   connectionStatus.connected = true;
   connectionStatus.connecting = false;
   connectionStatus.error = null;
-  console.log('Socket connected:', socket.id);
+  // console.log('Socket connected:', socket.id);
 });
 
 socket.on('disconnect', (reason) => {
   connectionStatus.connected = false;
   connectionStatus.connecting = false;
-  console.log('Socket disconnected:', reason);
+  // console.log('Socket disconnected:', reason);
 });
 
 socket.on('connect_error', (error) => {
   connectionStatus.connected = false;
   connectionStatus.connecting = false;
   connectionStatus.error = error.message;
-  console.error('Socket connection error:', error);
+  // console.error('Socket connection error:', error);
 });
 
 socket.on('reconnect', (attemptNumber) => {
   connectionStatus.connected = true;
   connectionStatus.connecting = false;
   connectionStatus.error = null;
-  console.log('Socket reconnected after', attemptNumber, 'attempts');
+  // console.log('Socket reconnected after', attemptNumber, 'attempts');
 });
 
 socket.on('reconnect_attempt', () => {
   connectionStatus.connecting = true;
-  console.log('Attempting to reconnect...');
+  // console.log('Attempting to reconnect...');
 });
 
 socket.on('reconnect_error', (error) => {
   connectionStatus.error = error.message;
-  console.error('Reconnection error:', error);
+  // console.error('Reconnection error:', error);
 });
 
 socket.on('reconnect_failed', () => {
   connectionStatus.connected = false;
   connectionStatus.connecting = false;
   connectionStatus.error = 'Failed to reconnect';
-  console.error('Failed to reconnect to server');
+  // console.error('Failed to reconnect to server');
 });

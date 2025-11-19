@@ -58,12 +58,12 @@ const Board = () => {
                     }, 100);
                 };
                 img.onerror = (err) => {
-                    console.error('Error loading remote canvas state image:', err);
+                    // console.error('Error loading remote canvas state image:', err);
                     isLoadingFromStorage.current = false;
                 };
                 img.src = event.detail.canvasState;
             } catch (error) {
-                console.error('Error loading remote canvas state:', error);
+                // console.error('Error loading remote canvas state:', error);
                 isLoadingFromStorage.current = false;
             }
         }
@@ -112,7 +112,7 @@ const Board = () => {
                     img.src = dataURL;
                 }
             } catch (error) {
-                console.error('Error sending canvas state:', error);
+                // console.error('Error sending canvas state:', error);
             }
         };
 
@@ -194,7 +194,7 @@ const Board = () => {
                             }, 100)
                         }
                         img.onerror = (err) => {
-                            console.error('Error loading image from localStorage:', err)
+                            // console.error('Error loading image from localStorage:', err)
                             // Clear canvas on error
                             context.clearRect(0, 0, canvas.width, canvas.height)
                             const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
@@ -211,7 +211,7 @@ const Board = () => {
                         historyPointer.current = 0
                     }
                 } catch (error) {
-                    console.error('Error loading canvas from localStorage:', error)
+                    // console.error('Error loading canvas from localStorage:', error)
                     // Clear canvas on error
                     context.clearRect(0, 0, canvas.width, canvas.height)
                     const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
@@ -238,7 +238,7 @@ const Board = () => {
                     localStorage.setItem(`creatisketch_canvas_${currentRoom}`, dataURL)
                 }
             } catch (error) {
-                console.error('Error saving canvas to localStorage:', error)
+                // console.error('Error saving canvas to localStorage:', error)
             }
         }, 5000) // Save every 5 seconds
 
@@ -273,7 +273,7 @@ const Board = () => {
                 anchor.download = `creatisketch-${generateTimestamp()}.jpg`
             anchor.click()
             } catch (error) {
-                console.error('Error downloading canvas:', error)
+                // console.error('Error downloading canvas:', error)
             }
         } 
         else if (actionMenuItem === MENU_ITEMS.UNDO) {
@@ -299,7 +299,7 @@ const Board = () => {
                 socket.emit('clearCanvas')
                 localStorage.removeItem(`creatisketch_canvas_${currentRoom}`)
             } catch (error) {
-                console.error('Error clearing canvas:', error)
+                // console.error('Error clearing canvas:', error)
             }
         }
         dispatch(actionItemClick(null))
@@ -636,7 +636,7 @@ const Board = () => {
                 anchor.download = `creatisketch-${generateTimestamp()}.png`
                 anchor.click()
             } catch (error) {
-                console.error('Error downloading canvas as PNG:', error)
+                // console.error('Error downloading canvas as PNG:', error)
             }
         }
 
