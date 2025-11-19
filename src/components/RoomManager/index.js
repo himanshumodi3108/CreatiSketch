@@ -21,6 +21,16 @@ const RoomManager = () => {
     const handleRoomJoined = (data) => {
       dispatch(setRoom(data.roomId));
       dispatch(setUserCount(data.userCount));
+      
+      // For collaborative rooms (not default), request canvas state from other users
+      if (data.roomId !== 'default') {
+        // Small delay to ensure canvas is ready
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('requestCanvasStateFromUsers', { 
+            detail: { roomId: data.roomId } 
+          }));
+        }, 100);
+      }
     };
 
     const handleUserJoined = (data) => {

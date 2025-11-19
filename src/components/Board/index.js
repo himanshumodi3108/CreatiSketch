@@ -17,39 +17,214 @@ const Board = () => {
     const shapeStart = useRef({ x: 0, y: 0 })
     const isRemoteDrawingActive = useRef(false)
     const lastColorSize = useRef({ color: null, size: null })
+    const isLoadingFromStorage = useRef(false) // Track when loading from localStorage
+    const hasReceivedRemoteState = useRef(false) // Track if we've received remote state for current room
     const {activeMenuItem, actionMenuItem, currentRoom} = useSelector((state) => state.menu)
     const {color, size} = useSelector((state) => state.toolbox[activeMenuItem])
     const [isInitialized, setIsInitialized] = useState(false)
 
+    // Handler for loading remote canvas state (when joining a collaborative room)
+    const handleLoadCanvasState = (event) => {
+        if (event.detail.roomId === currentRoom && canvasRef.current) {
+            hasReceivedRemoteState.current = true
+            isLoadingFromStorage.current = true
+            
+            const canvas = canvasRef.current;
+            // Ensure canvas has dimensions
+            if (canvas.width === 0 || canvas.height === 0) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            const context = canvas.getContext('2d');
+            
+            try {
+                const img = new Image();
+                img.onload = () => {
+                    // Clear and draw the image to fill the entire canvas
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Update history
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    drawHistory.current = [imageData];
+                    historyPointer.current = 0;
+                    
+                    // Save to localStorage for persistence
+                    localStorage.setItem(`creatisketch_canvas_${currentRoom}`, event.detail.canvasState);
+                    
+                    // Mark loading as complete
+                    setTimeout(() => {
+                        isLoadingFromStorage.current = false;
+                    }, 100);
+                };
+                img.onerror = (err) => {
+                    console.error('Error loading remote canvas state image:', err);
+                    isLoadingFromStorage.current = false;
+                };
+                img.src = event.detail.canvasState;
+            } catch (error) {
+                console.error('Error loading remote canvas state:', error);
+                isLoadingFromStorage.current = false;
+            }
+        }
+    };
+
+    // Set up event listener for remote canvas state
+    useEffect(() => {
+        window.addEventListener('loadCanvasState', handleLoadCanvasState);
+        return () => {
+            window.removeEventListener('loadCanvasState', handleLoadCanvasState);
+        };
+    }, [currentRoom]);
+
+    // Handle request to send canvas state to newly joined user
+    useEffect(() => {
+        if (!canvasRef.current || currentRoom === 'default') return;
+
+        const handleRequestCanvasState = (data) => {
+            // Another user is requesting canvas state - send it if we have content
+            try {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    const dataURL = canvas.toDataURL();
+                    // Check if canvas has actual content before sending
+                    const img = new Image();
+                    img.onload = () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = canvas.width;
+                        tempCanvas.height = canvas.height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(img, 0, 0);
+                        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        // Check if canvas has non-white content
+                        const hasContent = imageData.data.some((pixel, index) => {
+                            if (index % 4 === 3) return false; // Skip alpha channel
+                            return pixel !== 255; // Not white
+                        });
+                        
+                        if (hasContent) {
+                            socket.emit('sendCanvasState', { 
+                                canvasState: dataURL, 
+                                requesterId: data.requesterId 
+                            });
+                        }
+                    };
+                    img.src = dataURL;
+                }
+            } catch (error) {
+                console.error('Error sending canvas state:', error);
+            }
+        };
+
+        const handleCanvasStateReceived = (data) => {
+            // Received canvas state from another user
+            if (data.roomId === currentRoom) {
+                window.dispatchEvent(new CustomEvent('loadCanvasState', { 
+                    detail: { canvasState: data.canvasState, roomId: data.roomId } 
+                }));
+            }
+        };
+
+        const handleRequestCanvasStateFromUsers = (event) => {
+            if (event.detail.roomId === currentRoom) {
+                // Request canvas state from other users in the room
+                socket.emit('requestCanvasState');
+            }
+        };
+
+        socket.on('requestCanvasState', handleRequestCanvasState);
+        socket.on('canvasStateReceived', handleCanvasStateReceived);
+        window.addEventListener('requestCanvasStateFromUsers', handleRequestCanvasStateFromUsers);
+
+        return () => {
+            socket.off('requestCanvasState', handleRequestCanvasState);
+            socket.off('canvasStateReceived', handleCanvasStateReceived);
+            window.removeEventListener('requestCanvasStateFromUsers', handleRequestCanvasStateFromUsers);
+        };
+    }, [currentRoom]);
+
     // Load canvas from localStorage on mount and when room changes
+    // For collaborative rooms, wait for remote state first
     useEffect(() => {
         if (!canvasRef.current) return
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d')
         
-        try {
-            const savedCanvas = localStorage.getItem(`creatisketch_canvas_${currentRoom}`)
-            if (savedCanvas) {
-                const img = new Image()
-                img.onload = () => {
+        // Reset remote state flag when room changes
+        hasReceivedRemoteState.current = false
+        
+        // Ensure canvas has dimensions before loading
+        if (canvas.width === 0 || canvas.height === 0) {
+            canvas.width = window.innerWidth
+            canvas.height = window.innerHeight
+        }
+        
+        // For collaborative rooms, wait a bit for remote state to arrive
+        // For default room, load immediately from localStorage
+        const loadDelay = currentRoom === 'default' ? 0 : 1500;
+        
+        const loadTimer = setTimeout(() => {
+            // Only load from localStorage if we haven't received remote state
+            if (!hasReceivedRemoteState.current || currentRoom === 'default') {
+                try {
+                    const savedCanvas = localStorage.getItem(`creatisketch_canvas_${currentRoom}`)
+                    if (savedCanvas) {
+                        isLoadingFromStorage.current = true
+                        const img = new Image()
+                        img.onload = () => {
+                            // Ensure canvas dimensions are set
+                            if (canvas.width === 0 || canvas.height === 0) {
+                                canvas.width = window.innerWidth
+                                canvas.height = window.innerHeight
+                            }
+                            
+                            // Clear and draw the image to fill the entire canvas
+                            context.clearRect(0, 0, canvas.width, canvas.height)
+                            // Draw image to fill canvas dimensions (stretch to fit)
+                            context.drawImage(img, 0, 0, canvas.width, canvas.height)
+                            
+                            // Update history with the current canvas state
+                            const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+                            drawHistory.current = [imageData]
+                            historyPointer.current = 0
+                            
+                            // Mark loading as complete after a short delay to ensure rendering
+                            setTimeout(() => {
+                                isLoadingFromStorage.current = false
+                            }, 100)
+                        }
+                        img.onerror = (err) => {
+                            console.error('Error loading image from localStorage:', err)
+                            // Clear canvas on error
+                            context.clearRect(0, 0, canvas.width, canvas.height)
+                            const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+                            drawHistory.current = [imageData]
+                            historyPointer.current = 0
+                            isLoadingFromStorage.current = false
+                        }
+                        img.src = savedCanvas
+                    } else {
+                        // Clear canvas if no saved data for this room
+                        context.clearRect(0, 0, canvas.width, canvas.height)
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+                        drawHistory.current = [imageData]
+                        historyPointer.current = 0
+                    }
+                } catch (error) {
+                    console.error('Error loading canvas from localStorage:', error)
+                    // Clear canvas on error
                     context.clearRect(0, 0, canvas.width, canvas.height)
-                    context.drawImage(img, 0, 0)
                     const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
                     drawHistory.current = [imageData]
                     historyPointer.current = 0
                 }
-                img.src = savedCanvas
-            } else {
-                // Clear canvas if no saved data for this room
-                context.clearRect(0, 0, canvas.width, canvas.height)
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
-                drawHistory.current = [imageData]
-                historyPointer.current = 0
             }
-        } catch (error) {
-            console.error('Error loading canvas from localStorage:', error)
-        }
-        if (!isInitialized) setIsInitialized(true)
+            if (!isInitialized) setIsInitialized(true)
+        }, loadDelay);
+        
+        return () => {
+            clearTimeout(loadTimer);
+        };
     }, [currentRoom, isInitialized])
 
     // Save canvas to localStorage periodically
@@ -261,7 +436,8 @@ const Board = () => {
         }
         
         // Only resize if dimensions actually changed
-        if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        // Skip resize if we're currently loading from localStorage to prevent interference
+        if (!isLoadingFromStorage.current && (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight)) {
             resizeCanvas()
         }
         
